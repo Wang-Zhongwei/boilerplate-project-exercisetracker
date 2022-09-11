@@ -19,7 +19,6 @@ User = mongoose.model("User", new mongoose.Schema({ username: String }));
 Exercise = mongoose.model(
   "Exercise",
   new mongoose.Schema({
-    username: String,
     userId: String,
     description: String,
     duration: Number,
@@ -53,22 +52,21 @@ app.post("/api/users/:_id/exercises", (req, res) => {
 
     // if found existing user, create new exercise for the user
     let newExercise = new Exercise({
-      username: user.username,
       userId: userId,
       description: description,
       duration: duration,
-      date: date,
+      date: date === '' ? new Date() : new Date(date),
     });
 
     // save new exercise
     newExercise.save((err, data) => {
       if (err) return console.error(err);
       res.json({
-        _id: data.userId,
         username: user.username,
         description: data.description,
         duration: data.duration,
         date: data.date.toDateString(),
+        _id: data.userId
       });
     });
   });
