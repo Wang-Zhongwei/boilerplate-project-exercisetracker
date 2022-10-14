@@ -45,17 +45,20 @@ app.post("/api/users/:_id/exercises", (req, res) => {
   let userId = req.params._id;
   let description = req.body.description;
   let duration = req.body.duration;
-  let date = req.body.date;
+  let date = req.body.date === "" ? new Date() : new Date(req.body.date);
 
   User.findById(userId, (err, user) => {
-    if (err) return console.error(err);
+    if (err) {
+      console.error(err);
+      return res.send("Unknown userId");
+    }
 
     // if found existing user, create new exercise for the user
     let newExercise = new Exercise({
       userId: userId,
       description: description,
       duration: duration,
-      date: date === '' ? new Date() : new Date(date),
+      date: date
     });
 
     // save new exercise
@@ -80,42 +83,46 @@ app.get("/api/users", (req, res) => {
   });
 });
 
-// get all exercises for a specific user
+// get all exercises for a specific user with from, to and limit parameters
 app.get("/api/users/:_id/logs", (req, res) => {
   let userId = req.params._id;
-  let from = new Date(req.query.from);
-  let to = new Date(req.query.to);
+  let from = req.query.from;
+  let to = req.query.to;
   let limit = req.query.limit;
 
-  // check date
-  if (from.toDateString() === 'Invalid Date') 
-    from = new Date(0); // 1970 Jan 1
-  if (to.toDateString() === 'Invalid Date') 
-    to = new Date(); // now
-  
+  // correct this line
   User.findById(userId, (err, user) => {
-    if (err) return console.error(err);
-
+    if (err) {
+      console.error(err);
+      return res.send("Unknown userId");
+    }
+    if (!user) return res.send("Unknown userId");
+    
     Exercise.find({ userId: userId }, (err, exercises) => {
       if (err) return console.error(err);
-      let log = exercises
-        .filter((exercise) => {
-          return exercise.date >= from && exercise.date <= to;
-        })
-        .map((exercise) => {
-          return {
-            description: exercise.description,
-            duration: exercise.duration,
-            date: exercise.date.toDateString(),
-          };
-        })
-        .slice(0, limit === undefined ? exercises.length : limit);
+
+      // filter exercises by from and to dates
+      if (from && to) {
+        exercises = exercises.filter(
+          (exercise) =>
+            exercise.date >= new Date(from) && exercise.date <= new Date(to)
+        );
+      }
+
+      // limit the number of exercises
+      if (limit) {
+        exercises = exercises.slice(0, limit);
+      }
 
       res.json({
-        username: user.username,
-        count: log.length,
         _id: user._id,
-        log: log,
+        username: user.username,
+        count: exercises.length,
+        log: exercises.map((exercise) => ({
+          description: exercise.description,
+          duration: exercise.duration,
+          date: exercise.date.toDateString(),
+        })),
       });
     });
   });
