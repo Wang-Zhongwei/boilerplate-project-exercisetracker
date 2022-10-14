@@ -96,7 +96,6 @@ app.get("/api/users/:_id/logs", (req, res) => {
       console.error(err);
       return res.send("Unknown userId");
     }
-    if (!user) return res.send("Unknown userId");
     
     Exercise.find({ userId: userId }, (err, exercises) => {
       if (err) return console.error(err);
