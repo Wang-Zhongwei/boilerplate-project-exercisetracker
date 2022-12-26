@@ -6,7 +6,12 @@ const mongoose = require("mongoose");
 require("dotenv").config();
 
 // Middleware
-app.use(cors());
+app.use(cors()); // allows cross-origin requests
+// add allow-access-control-origin header to response
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  next();
+}); 
 app.use(express.static("public"));
 app.use(bodyParser.urlencoded({ extended: false }));
 
@@ -45,7 +50,7 @@ app.post("/api/users/:_id/exercises", (req, res) => {
   let userId = req.params._id;
   let description = req.body.description;
   let duration = req.body.duration;
-  let date = req.body.date === "" ? new Date() : new Date(req.body.date);
+  let date = req.body.date === '' ? new Date() : new Date(req.body.date);
 
   User.findById(userId, (err, user) => {
     if (err) {
@@ -55,10 +60,10 @@ app.post("/api/users/:_id/exercises", (req, res) => {
 
     // if found existing user, create new exercise for the user
     let newExercise = new Exercise({
-      userId: userId,
-      description: description,
-      duration: duration,
-      date: date
+      "userId": userId,
+      "description": description,
+      "duration": duration,
+      "date": date 
     });
 
     // save new exercise
@@ -114,9 +119,9 @@ app.get("/api/users/:_id/logs", (req, res) => {
       }
 
       res.json({
-        _id: user._id,
         username: user.username,
         count: exercises.length,
+        _id: user._id,
         log: exercises.map((exercise) => ({
           description: exercise.description,
           duration: exercise.duration,
